@@ -1,6 +1,7 @@
 # docs and experiment results can be found at https://docs.cleanrl.dev/rl-algorithms/ppo/#ppo_atari_lstmpy based on
 # https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo_atari_lstm.py Modified to work with GDRL,
-# vector observation space, use GRU/Vanilla RNN with checkpoint saving/basic inference added.
+# vector observation space, use GRU/Vanilla RNN with checkpoint saving/basic inference added, and other changes.
+# Hyperparameter defaults have been changed, feel free to adjust as needed.
 
 import os
 import sys
