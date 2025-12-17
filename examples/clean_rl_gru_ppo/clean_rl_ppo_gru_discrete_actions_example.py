@@ -4,13 +4,13 @@
 # Hyperparameter defaults have been changed, feel free to adjust as needed.
 
 import os
-import sys
-import random
-import time
 import pathlib
-from typing import Optional
+import random
+import sys
+import time
 from collections import deque
 from dataclasses import dataclass
+from typing import Optional
 
 import gymnasium as gym
 import numpy as np
@@ -18,9 +18,9 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import tyro
+from godot_rl.wrappers.clean_rl_wrapper import CleanRLGodotEnv
 from torch.distributions.categorical import Categorical
 from torch.utils.tensorboard import SummaryWriter
-from godot_rl.wrappers.clean_rl_wrapper import CleanRLGodotEnv
 
 
 @dataclass
@@ -139,9 +139,7 @@ class Agent(nn.Module):
         done = done.reshape((-1, batch_size))
         new_hidden = []
         for h, d in zip(hidden, done):
-            h, rnn_state = self.rnn(
-                h.unsqueeze(0), (1.0 - d).view(1, -1, 1) * rnn_state
-            )
+            h, rnn_state = self.rnn(h.unsqueeze(0), (1.0 - d).view(1, -1, 1) * rnn_state)
             new_hidden += [h]
         new_hidden = torch.flatten(torch.cat(new_hidden), 0, 1)
         return new_hidden, rnn_state
@@ -205,17 +203,17 @@ if __name__ == "__main__":
             print("Failed to load model. Can't proceed with inference.")
             sys.exit(1)
 
-        next_rnn_state = torch.zeros(inference_agent.rnn.num_layers,
-                                     args.num_envs,
-                                     inference_agent.rnn.hidden_size).to(device)
+        next_rnn_state = torch.zeros(inference_agent.rnn.num_layers, args.num_envs, inference_agent.rnn.hidden_size).to(
+            device
+        )
         next_obs, _ = envs.reset(seed=args.seed)
         next_obs = torch.Tensor(next_obs).to(device)
         next_done = torch.zeros(args.num_envs).to(device)
         for i in range(500):
             with torch.no_grad():
-                action, logprob, _, value, next_rnn_state = inference_agent.get_action_and_value(next_obs,
-                                                                                                 next_rnn_state,
-                                                                                                 next_done)
+                action, logprob, _, value, next_rnn_state = inference_agent.get_action_and_value(
+                    next_obs, next_rnn_state, next_done
+                )
             next_obs, reward, terminations, truncations, infos = envs.step(action.cpu().numpy())
             next_done = np.logical_or(terminations, truncations)
             next_obs, next_done = torch.Tensor(next_obs).to(device), torch.Tensor(next_done).to(device)
@@ -278,7 +276,7 @@ if __name__ == "__main__":
     global_steps_since_save = 0
 
     for iteration in range(1, args.num_iterations + 1):
-        #initial_rnn_state = (next_rnn_state[0].clone(), next_rnn_state[1].clone())
+        # initial_rnn_state = (next_rnn_state[0].clone(), next_rnn_state[1].clone())
         initial_rnn_state = next_rnn_state.clone()
         # Annealing the rate if instructed to do so.
         if args.anneal_lr:
@@ -300,8 +298,9 @@ if __name__ == "__main__":
 
             # ALGO LOGIC: action logic
             with torch.no_grad():
-                action, logprob, _, value, next_rnn_state = agent.get_action_and_value(next_obs, next_rnn_state,
-                                                                                       next_done)
+                action, logprob, _, value, next_rnn_state = agent.get_action_and_value(
+                    next_obs, next_rnn_state, next_done
+                )
                 values[step] = value.flatten()
             actions[step] = action
             logprobs[step] = logprob
@@ -363,7 +362,7 @@ if __name__ == "__main__":
 
                 _, newlogprob, entropy, newvalue, _ = agent.get_action_and_value(
                     b_obs[mb_inds],
-                    #(initial_rnn_state[0][:, mbenvinds], initial_rnn_state[1][:, mbenvinds]),
+                    # (initial_rnn_state[0][:, mbenvinds], initial_rnn_state[1][:, mbenvinds]),
                     initial_rnn_state[:, mbenvinds],
                     b_dones[mb_inds],
                     b_actions.long()[mb_inds],
